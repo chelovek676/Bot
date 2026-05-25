@@ -9,6 +9,7 @@ from collections import defaultdict
 import spacy
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from tts_engine import speak_async, get_cache_stats, wait_for_tts, shutdown_tts
+from stt_engine import listen_once
 
 MODEL_PATH = "./bert_intent_model"
 
@@ -282,6 +283,9 @@ def main():
     enable_tts_input = input("Включить озвучку? (да/нет): ").strip().lower()
     enable_tts = enable_tts_input in ["да", "д", "yes", "y", ""]
     
+    enable_stt_input = input("Включить голосовой ввод (Whisper)? (да/нет): ").strip().lower()
+    enable_stt = enable_stt_input in ["да", "д", "yes", "y", ""]
+    
     bot = ChatBot(enable_tts=enable_tts)
     
     user_name = input("Как тебя зовут? ").strip() or "аноним"
@@ -297,14 +301,30 @@ def main():
     print("   - как дела / расскажи анекдот — поболтать")
     print("   - выход / quit — завершить")
     print("-" * 50)
+   
     
     if enable_tts:
         speak_async("Система готова к работе")
-        time.sleep(0.5)  
+        time.sleep(0.5)
     
     while True:
         try:
-            user_input = input(f"{user_name}: ").strip()
+            if enable_stt:
+                prompt = input(f"\n{user_name} (нажмите Enter для записи голоса): ").strip()
+                
+                if prompt == "":
+                    print("Слушаю 5 секунд...")
+                    user_input = listen_once()
+                    print(f"Распознано: '{user_input}'")
+                    
+                    if not user_input:
+                        print("Пустой результат. Попробуйте говорить громче или проверьте микрофон.")
+                        continue
+                else:
+                    user_input = prompt
+            else:
+                user_input = input(f"\n{user_name}: ").strip()
+
             if user_input.lower() in ["выход", "exit", "quit", "q"]:
                 response = f"Пока, {user_name}!"
                 print(f"Бот: {response}")
