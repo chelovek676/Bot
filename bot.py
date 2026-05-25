@@ -6,7 +6,24 @@ import spacy
 
 API_KEY = "0c969c7b82a3f98ed1b475fd8b734ade"
 
+
 nlp = spacy.load("ru_core_news_sm")
+
+
+class DialogState:
+    START = "start"
+    WAIT_CITY = "wait_city"
+
+
+user_states = {}
+
+def get_state(user_id):
+    """Получить текущее состояние пользователя"""
+    return user_states.get(user_id, DialogState.START)
+
+def set_state(user_id, state):
+    """Установить новое состояние пользователя"""
+    user_states[user_id] = state
 
 def init_db():
     conn = sqlite3.connect("bot.db")
@@ -47,6 +64,7 @@ def log_message_db(user_name, user_message, bot_response):
     conn.commit()
     conn.close()
 
+
 def get_weather_simple(city):
     url = "http://api.weatherstack.com/current"
     params = {"access_key": API_KEY, "query": city, "units": "m"}
@@ -65,20 +83,20 @@ def get_weather_simple(city):
         
         temperature = current.get("temperature", "N/A")
         wind_speed = current.get("wind_speed", 0)
-        return f"{city}: {temperature}°C, ветер {wind_speed} м/с"
+        return f"В {city.capitalize()} сейчас {temperature}°C, ветер {wind_speed} м/с"
     except Exception:
         return "Ошибка соединения с погодным сервисом"
 
 def _get_weather(city):
     return get_weather_simple(city)
 
-def handle_greetings(match, user_name=None):
+def handle_greetings(match=None, user_name=None):
     return "Здравствуй!"
 
-def handle_farewell(match, user_name=None):
+def handle_farewell(match=None, user_name=None):
     return "Пока!"
 
-def handle_addition(match, user_name=None):
+def handle_addition(match=None, user_name=None):
     try:
         a = float(match.group(1))
         b = float(match.group(2))
@@ -90,54 +108,84 @@ def handle_time(match=None, user_name=None):
     return datetime.now().strftime("%H:%M:%S")
 
 patterns = [
-    (re.compile(r"^(привет|здравствуй|добрый день)$", re.IGNORECASE), handle_greetings),
+    (re.compile(r"^(привет|здравствуй|добрый день|здарова|хай)$", re.IGNORECASE), handle_greetings),
     (re.compile(r"^(чао|пока|до свидания)$", re.IGNORECASE), handle_farewell),
-    (re.compile(r"^погода в ([а-яА-Яa-zA-Z\-]+)", re.IGNORECASE), None),  
-    (re.compile(r"^(\d+)\s*\+\s*(\d+)$"), handle_addition),
-    (re.compile(r"^(время|который час)", re.IGNORECASE), handle_time),
+    (re.compile(r"(\d+)\s*\+\s*(\d+)"), handle_addition),
+    (re.compile(r"(время|который час|сколько времени)", re.IGNORECASE), handle_time),
 ]
 
 def handle_message(text, user_name="аноним"):
-    doc = nlp(text)
-    city = None
+    user_id = user_name
+    state = get_state(user_id)
+    
 
-    for ent in doc.ents:
-        if ent.label_ in ["GPE", "LOC"]:
-            city = ent[0].lemma_  
-            break
+    if state == DialogState.WAIT_CITY:
 
-    if any(token.lemma_.lower() == "погода" for token in doc) and city:
+        city = text.strip()
+        set_state(user_id, DialogState.START)
+        
         response = _get_weather(city)
         log_message_db(user_name, text, response)
         return response
 
+    doc = nlp(text)
+    
+    weather_lemmas = {"погода", "температура", "градус", "холодно", "жарко", 
+                      "дождь", "снег", "ветер", "облачно", "ясно"}
+    is_weather_request = any(token.lemma_.lower() in weather_lemmas for token in doc)
+    
+
+    city = None
+    for ent in doc.ents:
+        if ent.label_ in ["GPE", "LOC"]:
+            city = ent.text.strip()
+            break
+    
+    if is_weather_request and city:
+        response = _get_weather(city)
+        log_message_db(user_name, text, response)
+        return response
+    
+    if is_weather_request and not city:
+        set_state(user_id, DialogState.WAIT_CITY)
+        response = "В каком городе вас интересует погода?"
+        log_message_db(user_name, text, response)
+        return response
+    
+    time_lemmas = {"время", "час", "который"}
+    is_time_request = any(token.lemma_.lower() in time_lemmas for token in doc)
+    if is_time_request:
+        response = handle_time()
+        log_message_db(user_name, text, response)
+        return response
+    
     for pattern, handler in patterns:
         match = pattern.search(text)
-        if match and handler is not None:
+        if match:
             response = handler(match, user_name)
             log_message_db(user_name, text, response)
             return response
 
-   
-    response = "Че, попутал"
+    response = "В душе не чаю"
     log_message_db(user_name, text, response)
     return response
 
 class ChatBot:
     def __init__(self):
         init_db()
-    
-    def process(self, message, user_name):
-        return handle_message(message, user_name)
-    
+
+def process(self, message, user_name):
+        return
+
 def main():
     init_db()
     bot = ChatBot()
     
     user_name = input("Как тебя зовут? ").strip() or "аноним"
     print(f"\nПривет, {user_name}!")
-    print("Команды: привет, пока, погода в [город], 5+3, время")
-    print("-" * 40)
+    print("Команды: привет, пока, погода, время, 5+3")
+    print("Поддерживаю многошаговый диалог для погоды!")
+    print("-" * 50)
     
     while True:
         try:
@@ -155,5 +203,5 @@ def main():
         except Exception as e:
             print(f"Бот: Ошибка - {e}")
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()
