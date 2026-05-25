@@ -1,0 +1,317 @@
+﻿text,intent
+привет,greeting
+здравствуй,greeting
+добрый день,greeting
+приветик,greeting
+здорово,greeting
+доброе утро,greeting
+добрый вечер,greeting
+хай,greeting
+салют,greeting
+приветствую,greeting
+здравствуйте,greeting
+привет бот,greeting
+ку,greeting
+доброго времени суток,greeting
+приветствую тебя,greeting
+здравия желаю,greeting
+привет друг,greeting
+хеллоу,greeting
+привет чат,greeting
+добрый денек,greeting
+приветствую вас,greeting
+здравствуй бот,greeting
+приветик бот,greeting
+доброе утро бот,greeting
+привет робот,greeting
+здравствуй друг,greeting
+приветствую друг,greeting
+добрый день бот,greeting
+приветствую робот,greeting
+хай бот,greeting
+привет дорогой,greeting
+здравствуй дорогой,greeting
+добрый вечер бот,greeting
+приветик друг,greeting
+салют бот,greeting
+приветствую дорогой,greeting
+здравия желаю бот,greeting
+привет милый,greeting
+добрый денек бот,greeting
+привет красавчик,greeting
+приветики,greeting
+здарова,greeting
+приветствую тебя бот,greeting
+добрый день друг,greeting
+хай робот,greeting
+пока,farewell
+до свидания,farewell
+чао,farewell
+прощай,farewell
+увидимся,farewell
+до встречи,farewell
+бывай,farewell
+пока пока,farewell
+до скорого,farewell
+адью,farewell
+всего доброго,farewell
+всего хорошего,farewell
+до завтра,farewell
+пока бот,farewell
+до свидания бот,farewell
+прощай бот,farewell
+бывай бот,farewell
+увидимся бот,farewell
+до встречи бот,farewell
+чао бот,farewell
+до скорого бот,farewell
+адью бот,farewell
+всего доброго бот,farewell
+всего хорошего бот,farewell
+до завтра бот,farewell
+пока друг,farewell
+до свидания друг,farewell
+бывай друг,farewell
+увидимся друг,farewell
+до встречи друг,farewell
+чао друг,farewell
+до скорого друг,farewell
+адью друг,farewell
+всего доброго друг,farewell
+всего хорошего друг,farewell
+до завтра друг,farewell
+пока робот,farewell
+до свидания робот,farewell
+бывай робот,farewell
+увидимся робот,farewell
+пока пока бот,farewell
+до новых встреч,farewell
+бывай дорогой,farewell
+погода в Москве,weather
+какая погода в Санкт-Петербурге,weather
+погода сегодня,weather
+погода в Питере,weather
+температура в Минске,weather
+погода в Казани,weather
+какая погода,weather
+погода в Сочи,weather
+погода в Екатеринбурге,weather
+температура воздуха,weather
+погода в Новосибирске,weather
+погода сейчас,weather
+погода в Челябинске,weather
+какая температура,weather
+погода в Омске,weather
+погода в Самаре,weather
+погода в Ростове,weather
+погода в Уфе,weather
+погода в Красноярске,weather
+погода в Воронеже,weather
+погода в Перми,weather
+погода в Волгограде,weather
+погода в Краснодаре,weather
+погода в Саратове,weather
+погода в Тюмени,weather
+погода в Тольятти,weather
+погода в Ижевске,weather
+погода в Барнауле,weather
+погода в Ульяновске,weather
+погода в Иркутске,weather
+погода в Хабаровске,weather
+погода в Ярославле,weather
+погода в Владивостоке,weather
+погода в Махачкале,weather
+погода в Томске,weather
+погода в Оренбурге,weather
+погода в Кемерово,weather
+погода в Рязани,weather
+погода в Астрахани,weather
+дождь,weather
+зонт,weather
+снег,weather
+град,weather
+туман,weather
+ветер,weather
+гроза,weather
+как одеться,weather
+нужна ли куртка,weather
+брать ли зонт,weather
+будет дождь,weather
+погода на завтра,weather
+прогноз погоды,weather
+температура сейчас,weather
+сколько градусов,weather
+на улице холодно,weather
+на улице тепло,weather
+погодка,weather
+дождливо,weather
+снежно,weather
+пасмурно,weather
+ясно,weather
+солнечно,weather
+зонт нужен,weather
+дождь будет,weather
+снег пойдет,weather
+градусы покажи,weather
+2+2,addition
+5 + 3,addition
+10+15,addition
+100 + 200,addition
+7+8,addition
+25 + 75,addition
+3+4,addition
+50+50,addition
+12 + 8,addition
+9+1,addition
+15 + 25,addition
+33+67,addition
+44 + 56,addition
+11+19,addition
+88 + 12,addition
+77+23,addition
+60 + 40,addition
+99+1,addition
+1 + 99,addition
+55 + 45,addition
+30+70,addition
+22 + 78,addition
+17+83,addition
+64 + 36,addition
+91+9,addition
+8+92,addition
+47 + 53,addition
+29+71,addition
+13 + 87,addition
+56+44,addition
+38 + 62,addition
+74+26,addition
+19 + 81,addition
+65+35,addition
+42 + 58,addition
+86+14,addition
+27 + 73,addition
+51+49,addition
+95 + 5,addition
+31+69,addition
+сколько будет 2+2,addition
+посчитай 5+3,addition
+10 плюс 15,addition
+сколько будет 3+2,addition
+посчитай мне,addition
+добавь 5 к 10,addition
+2 плюс 2,addition
+5 и 3 сложить,addition
+сумма 10 и 20,addition
+время,time
+который час,time
+сколько времени,time
+текущее время,time
+какое сейчас время,time
+покажи время,time
+время сейчас,time
+который час сейчас,time
+сколько времени сейчас,time
+время подскажите,time
+часы,time
+время покажи,time
+который час бот,time
+сколько времени бот,time
+время бот,time
+текущее время бот,time
+какое время,time
+время подскажи,time
+который час друг,time
+сколько времени друг,time
+время друг,time
+часы бот,time
+время покажи бот,time
+который час робот,time
+сколько времени робот,time
+время робот,time
+текущее время робот,time
+какое время сейчас,time
+время подскажи бот,time
+который час дорогой,time
+сколько времени дорогой,time
+время дорогой,time
+часы друг,time
+время покажи друг,time
+который час милый,time
+сколько времени милый,time
+время милый,time
+часы робот,time
+время покажи робот,time
+подскажи время,time
+скажи который час,time
+покажи часы,time
+какое сегодня число,date
+какая сегодня дата,date
+сегодня какое число,date
+какой сегодня день,date
+дата сегодня,date
+число сегодня,date
+какое число,date
+какой день сегодня,date
+сегодняшняя дата,date
+какое сегодня число бот,date
+дата сегодня бот,date
+число покажи,date
+какой день недели,date
+сегодня какой день недели,date
+день недели,date
+какое число завтра,date
+дата завтра,date
+число на завтра,date
+какое было число вчера,date
+дата вчера,date
+вчера какое число,date
+покажи дату,date
+скажи число,date
+подскажи дату,date
+какое сегодня число друг,date
+дата сегодня друг,date
+число сегодня бот,date
+как дела,smalltalk
+как ты,smalltalk
+как жизнь,smalltalk
+что нового,smalltalk
+как поживаешь,smalltalk
+как настроение,smalltalk
+все хорошо,smalltalk
+нормально,smalltalk
+отлично,smalltalk
+плохо,smalltalk
+спасибо,smalltalk
+благодарю,smalltalk
+круто,smalltalk
+класс,smalltalk
+супер,smalltalk
+здорово,smalltalk
+понял,smalltalk
+ок,smalltalk
+хорошо,smalltalk
+ладно,smalltalk
+ясно,smalltalk
+ага,smalltalk
+угу,smalltalk
+расскажи анекдот,smalltalk
+пошути,smalltalk
+развлеки меня,smalltalk
+скучно,smalltalk
+ты кто,smalltalk
+кто ты,smalltalk
+что ты умеешь,smalltalk
+как тебя зовут,smalltalk
+ты робот,smalltalk
+ты бот,smalltalk
+ты человек,smalltalk
+ты живой,smalltalk
+привет как дела,smalltalk
+как ты бот,smalltalk
+как жизнь бот,smalltalk
+что нового бот,smalltalk
+спасибо бот,smalltalk
+класс бот,smalltalk
+понял бот,smalltalk
+ок бот,smalltalk
+хорошо бот,smalltalk
