@@ -4,9 +4,14 @@ import sqlite3
 from datetime import datetime
 from collections import defaultdict
 import spacy
+import numpy as np
 
-pipeline = joblib.load("intent_model.pkl")
-nlp = joblib.load("nlp_model.pkl")
+
+pipeline = joblib.load("intent_model_embeddings.pkl")  
+label_encoder = joblib.load("label_encoder.pkl")        
+nlp = joblib.load("nlp_model_embeddings.pkl")         
+
+
 
 class DialogState:
     START = "START"
@@ -85,15 +90,18 @@ def get_weather_simple(city):
         return f"Ошибка соединения: {e}"
 
 def predict_intent(text):
+
     doc = nlp(text)
-    tokens = []
-    for token in doc:
-        if not token.is_stop and not token.is_punct and token.text.strip():
-            tokens.append(token.lemma_.lower())
-    processed = " ".join(tokens)
+    vectors = [token.vector for token in doc if token.has_vector and token.vector_norm != 0]
     
-    probabilities = pipeline.predict_proba([processed])[0]
-    intent = pipeline.predict([processed])[0]
+    if vectors:
+        text_vector = np.mean(vectors, axis=0).reshape(1, -1)
+    else:
+        text_vector = np.zeros((1, nlp.vocab.vectors_length))
+    
+    probabilities = pipeline.predict_proba(text_vector)[0]
+    intent_idx = pipeline.predict(text_vector)[0]
+    intent = label_encoder.inverse_transform([intent_idx])[0]
     confidence = max(probabilities)
     
     return intent, confidence
