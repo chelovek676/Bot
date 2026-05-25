@@ -1,17 +1,62 @@
 import re
 import joblib
 import sqlite3
+import torch
+import os
 from datetime import datetime
 from collections import defaultdict
 import spacy
-import numpy as np
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
+MODEL_PATH = "./bert_intent_model"
 
-pipeline = joblib.load("intent_model_embeddings.pkl")  
-label_encoder = joblib.load("label_encoder.pkl")        
-nlp = joblib.load("nlp_model_embeddings.pkl")         
+if not os.path.exists(MODEL_PATH):
+    print(f"Ошибка: Модель не найдена в {MODEL_PATH}")
+    print("Запустите сначала: python train_bert_intent.py")
+    exit()
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+print(f"Загрузка модели на {DEVICE}...")
+tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+model = AutoModelForSequenceClassification.from_pretrained(MODEL_PATH)
+model.to(DEVICE)
+model.eval()
+
+metadata = joblib.load(f"{MODEL_PATH}/metadata.pkl")
+id2label = metadata["id2label"]
+max_length = metadata.get("max_length", 64)
+
+nlp_ner = spacy.load("ru_core_news_sm")
+
+bert_cache = {}
+
+def bert_vector(text):
+    inputs = tokenizer(
+        text, 
+        return_tensors="pt", 
+        truncation=True, 
+        max_length=max_length,
+        padding=True
+    )
+    inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
+    
+    with torch.no_grad():
+        outputs = model(**inputs)
+    
+    logits = outputs.logits
+    probabilities = torch.softmax(logits, dim=1)[0]
+    predicted_class = torch.argmax(logits, dim=1).item()
+    
+    intent = id2label[predicted_class]
+    confidence = probabilities[predicted_class].item()
+    
+    return intent, confidence
+
+def cached_bert_vector(text):
+    if text not in bert_cache:
+        bert_cache[text] = bert_vector(text)
+    return bert_cache[text]
 
 class DialogState:
     START = "START"
@@ -90,52 +135,80 @@ def get_weather_simple(city):
         return f"Ошибка соединения: {e}"
 
 def predict_intent(text):
-
-    doc = nlp(text)
-    vectors = [token.vector for token in doc if token.has_vector and token.vector_norm != 0]
-    
-    if vectors:
-        text_vector = np.mean(vectors, axis=0).reshape(1, -1)
-    else:
-        text_vector = np.zeros((1, nlp.vocab.vectors_length))
-    
-    probabilities = pipeline.predict_proba(text_vector)[0]
-    intent_idx = pipeline.predict(text_vector)[0]
-    intent = label_encoder.inverse_transform([intent_idx])[0]
-    confidence = max(probabilities)
-    
-    return intent, confidence
+    return cached_bert_vector(text)
 
 def extract_city(text):
-    doc = nlp(text)
+    doc = nlp_ner(text)
     for ent in doc.ents:
         if ent.label_ in ["GPE", "LOC"]:
             return ent.text.strip()
     return None
 
-def handle_greeting(user_name=None):
+def greeting_skill(user_name=None):
     return f"Здравствуй, {user_name}!" if user_name else "Здравствуйте!"
 
-def handle_farewell(user_name=None):
+def farewell_skill(user_name=None):
     return f"До свидания, {user_name}!" if user_name else "До свидания!"
 
-def handle_addition(text):
-    match = re.search(r"(\d+)\s*\+\s*(\d+)", text)
+def addition_skill(text):
+    match = re.search(r"(\d+)\s*[+плюс]\s*(\d+)", text, re.IGNORECASE)
     if match:
         a, b = float(match.group(1)), float(match.group(2))
         return f"{a} + {b} = {a + b}"
     return "Не удалось вычислить"
 
-def handle_time():
+def time_skill():
     return f"Сейчас: {datetime.now().strftime('%H:%M:%S')}"
 
-def handle_weather(text, user_id):
+def weather_skill(text, user_id):
     city = extract_city(text)
     if city:
         return get_weather_simple(city)
     else:
         set_state(user_id, DialogState.WAIT_CITY)
         return "В каком городе вас интересует погода?"
+
+def smalltalk_skill(text):
+    text_lower = text.lower()
+    
+    if any(w in text_lower for w in ["как дела", "как ты", "как жизнь", "как поживаешь"]):
+        return "Спасибо, всё отлично! А у вас как?"
+    
+    if any(w in text_lower for w in ["спасибо", "благодарю"]):
+        return "Всегда рад помочь!"
+    
+    if any(w in text_lower for w in ["расскажи анекдот", "пошути", "развлеки"]):
+        return "Еврей нашёл кошелек, а там мало"
+
+    if any(w in text_lower for w in ["понял", "ок", "хорошо", "ладно", "ясно", "ага", "угу"]):
+        return "Отлично! Чем ещё могу помочь?"
+    
+    return "Понял вас. Чем ещё могу быть полезен?"
+
+def fallback():
+    return "Не понял запрос. Попробуйте: привет, погода в [город], 5+3, время, какое сегодня число, как дела"
+
+def route_intent(intent, text, user_id, user_name=None):
+    if intent == "weather":
+        return weather_skill(text, user_id)
+    
+    elif intent == "time":
+        return time_skill()
+    
+    elif intent == "greeting":
+        return greeting_skill(user_name)
+    
+    elif intent == "farewell":
+        return farewell_skill(user_name)
+    
+    elif intent == "addition":
+        return addition_skill(text)
+    
+    elif intent == "smalltalk":
+        return smalltalk_skill(text)
+    
+    else:
+        return fallback()
 
 def handle_message(text, user_name="аноним"):
     user_id = user_name
@@ -155,19 +228,7 @@ def handle_message(text, user_name="аноним"):
         log_message_db(user_name, text, response)
         return response
     
-    if intent == "greeting":
-        response = handle_greeting(user_name)
-    elif intent == "farewell":
-        response = handle_farewell(user_name)
-    elif intent == "weather":
-        response = handle_weather(text, user_id)
-    elif intent == "addition":
-        response = handle_addition(text)
-    elif intent == "time":
-        response = handle_time()
-    else:
-        response = "Не понял запрос. Попробуйте: привет, погода в [город], 5+3, время"
-    
+    response = route_intent(intent, text, user_id, user_name)
     log_message_db(user_name, text, response)
     return response
 
@@ -186,18 +247,20 @@ def main():
     user_name = input("Как тебя зовут? ").strip() or "аноним"
     save_user(user_name)
     
-    print(f"\nПривет, {user_name}!")
+    print(f"Привет, {user_name}!")
     print("   - привет / здравствуй — приветствие")
     print("   - пока / до свидания — прощание") 
-    print("   - погода в [город] — прогноз погоды")
-    print("   - 5+3 — калькулятор")
+    print("   - погода в [город], дождь, зонт — прогноз погоды")
+    print("   - 5+3, сколько будет 2+2 — калькулятор")
     print("   - время / который час — текущее время")
+    print("   - какое сегодня число / дата — сегодняшняя дата")
+    print("   - как дела / расскажи анекдот — поболтать")
     print("   - выход / quit — завершить")
     print("-" * 50)
     
     while True:
         try:
-            user_input = input(f"\n{user_name}: ").strip()
+            user_input = input(f"{user_name}: ").strip()
             if user_input.lower() in ["выход", "exit", "quit", "q"]:
                 print(f"Бот: Пока, {user_name}!")
                 break
@@ -209,7 +272,7 @@ def main():
             print(f"Бот: {response}")
             
         except KeyboardInterrupt:
-            print(f"\nБот: Пока, {user_name}!")
+            print(f"Бот: Пока, {user_name}!")
             break
         except Exception as e:
             print(f"Бот: Ошибка — {e}")
